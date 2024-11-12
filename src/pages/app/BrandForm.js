@@ -10,9 +10,14 @@ import {
   Platform,
   Alert,
 } from "react-native";
+import { createBrand, updateBrand } from "../../services/brandService";
+import { useAuth } from "../../context/AuthContext";
 
 export default function BrandForm({ route, navigation }) {
+  const [id, setId] = useState(null);
   const [description, setDescription] = useState("");
+
+  const { user } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -23,19 +28,25 @@ export default function BrandForm({ route, navigation }) {
   useEffect(() => {
     if (route.params?.brand) {
       const { brand } = route.params;
+      setId(brand.id);
       setDescription(brand.description);
     }
   }, [route.params]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!description) {
       Alert.alert("Erro", "Por favor, preencha o campo de descrição.");
       return;
     }
 
-    console.log("Marca salva:", {
-      description,
-    });
+    if (id) {
+      const response = await updateBrand(id, { description });
+      console.log(response);
+    } else {
+      const response = await createBrand({ description, user_id: user.id });
+      console.log(response);
+    }
+
     navigation.goBack();
   };
 
