@@ -11,13 +11,18 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../context/AuthContext";
+import { createProduct, updateProduct } from "../../services/productService";
 
 export default function ProductForm({ route, navigation }) {
   const [description, setDescription] = useState("");
   const [brandId, setBrandId] = useState("");
+  const [id, setId] = useState(null);
   const [brand, setBrand] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState();
+  const [value, setValue] = useState(null);
   const [brandSelected, setBrandSelected] = useState(null);
+  const { user } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -30,23 +35,38 @@ export default function ProductForm({ route, navigation }) {
   useEffect(() => {
     if (route.params?.product) {
       const { product } = route.params;
+      console.log("Produto", product.value);
       setDescription(product.description);
       setBrand(product.brand.description);
-      setPrice(product.price);
+      setPrice(product.value);
+      setValue(product.value);
+      setBrandId(product.brand.id);
+      setId(product.id);
     }
   }, [route.params]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!description || !brand || !price) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
       return;
     }
 
-    console.log("Produto salvo:", {
-      description,
-      brand,
-      price,
-    });
+    if (id) {
+      const response = await updateProduct(id, {
+        description,
+        value,
+        brand_id: brandId,
+      });
+      console.log(response);
+    } else {
+      const response = await createProduct({
+        description,
+        value,
+        brand_id: brandId,
+        user_id: user.id,
+      });
+      console.log(response);
+    }
     navigation.goBack();
   };
 
@@ -69,6 +89,7 @@ export default function ProductForm({ route, navigation }) {
             placeholder="Marca"
             value={brand}
             onChangeText={setBrand}
+            editable={false}
           />
           <View style={{ width: "2%" }} />
           <TouchableOpacity
@@ -91,8 +112,8 @@ export default function ProductForm({ route, navigation }) {
           style={styles.input}
           placeholder="Valor"
           keyboardType="numeric"
-          value={price}
-          onChangeText={setPrice}
+          value={value}
+          onChangeText={setValue}
         />
 
         <TouchableOpacity style={styles.button} onPress={handleSave}>
@@ -145,6 +166,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     backgroundColor: "#fff",
+    color: "black",
   },
   brandButton: {
     justifyContent: "center",

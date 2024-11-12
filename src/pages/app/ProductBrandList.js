@@ -4,29 +4,16 @@ import {
   View,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import React, { useLayoutEffect } from "react";
-
-const brandsData = [
-  { id: "1", description: "Marca A" },
-  { id: "2", description: "Marca B" },
-  { id: "3", description: "Marca C" },
-  { id: "4", description: "Marca D" },
-  { id: "5", description: "Marca E" },
-  { id: "6", description: "Marca F" },
-  { id: "7", description: "Marca G" },
-  { id: "8", description: "Marca H" },
-  { id: "9", description: "Marca I" },
-  { id: "10", description: "Marca J" },
-  { id: "11", description: "Marca K" },
-  { id: "12", description: "Marca L" },
-  { id: "13", description: "Marca M" },
-  { id: "14", description: "Marca N" },
-  { id: "15", description: "Marca O" },
-];
+import React, { useLayoutEffect, useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { getBrandsByUserId } from "../../services/brandService";
 
 export default function ProductBrandList({ navigation, route }) {
   const { selectBrand } = route.params;
+  const [brandsData, setBrandsData] = useState(null);
+  const { user } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -39,6 +26,15 @@ export default function ProductBrandList({ navigation, route }) {
     navigation.goBack();
   };
 
+  useEffect(() => {
+    getData();
+  }, []);
+
+  async function getData() {
+    const response = await getBrandsByUserId(user.id);
+    setBrandsData(response.data);
+  }
+
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
@@ -47,6 +43,14 @@ export default function ProductBrandList({ navigation, route }) {
       <Text style={styles.description}>{item.description}</Text>
     </TouchableOpacity>
   );
+
+  if (!brandsData) {
+    return (
+      <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
+        <ActivityIndicator size={"large"} color={"blue"} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
